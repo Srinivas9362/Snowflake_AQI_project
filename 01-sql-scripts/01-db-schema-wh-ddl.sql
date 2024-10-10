@@ -66,4 +66,4 @@ create warehouse if not exists adhoc_wh
      initially_suspended = true;
 
 show warehouses;
--- visit the warehouse home page from webui.
+

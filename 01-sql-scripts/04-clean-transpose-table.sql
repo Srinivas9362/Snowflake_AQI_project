@@ -32,13 +32,13 @@ where
     -- Mundka, Delhi - DPCC
     -- IGI Airport (T3), Delhi - IMD
 order by 
-    index_record_ts, id;
+    index_record_ts;
 
 -- No duplicate, the measurement is captured in clean way
 -- missing data observed
 
 -- step-3 how to transpose the data from rows to columns.
--- create temp table air_quality_tmp as
+create temp table air_quality_tmp as
 select 
         index_record_ts,
         country,
@@ -65,16 +65,16 @@ select
         index_record_ts, country, state, city, station, latitude, longitude
         order by country, state, city, station;
 
--- select * from air_quality_tmp
-select 
-    hour(INDEX_RECORD_TS) as measurement_hours,
-    *
-from 
-    air_quality_tmp
-where
-    country = 'India' and
-    state = 'Delhi' and 
-    station = 'IGI Airport (T3), Delhi - IMD';
+select count(*) from air_quality_tmp;
+-- select 
+--     hour(INDEX_RECORD_TS) as measurement_hours,
+--     *
+-- from 
+--     air_quality_tmp
+-- where
+--     country = 'India' and
+--     state = 'Delhi' and 
+--     station = 'IGI Airport (T3), Delhi - IMD';
 
 select 
         INDEX_RECORD_TS,
@@ -124,7 +124,7 @@ select
 -- step-2
 -- next task is to transpose it from rows to columns.
 create or replace dynamic table clean_flatten_aqi_dt
-    target_lag='30 min'
+    target_lag='DOWNSTREAM'
     warehouse=transform_wh
 as
 with step01_combine_pollutant_cte as (
@@ -197,4 +197,11 @@ step02_replace_na_cte as (
 )
 select *,
 from step02_replace_na_cte;
+
+SELECT * FROM clean_flatten_aqi_dt where 
+    country = 'India' and
+    state = 'Karnataka' and 
+    station = 'Silk Board, Bengaluru - KSPCB';
+
+SELECT count(*) FROM clean_flatten_aqi_dt 
 

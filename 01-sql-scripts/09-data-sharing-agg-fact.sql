@@ -38,7 +38,7 @@ where
 
 
 
-
+SELECT * FROM dev_db.stage_sch.weather_data;
 
 
 
@@ -69,7 +69,7 @@ select * from dev_db.consumption_sch.weather_data order by measurement_dt;
 -- create a task that runs everyday mid night at 1AM
 create or replace task refresh_weather_data_task
     warehouse = load_wh
-    schedule = 'USING CRON 55 23 * * * Asia/Kolkata'
+    schedule = 'USING CRON 59 16 * * * Asia/Kolkata'
 as
 insert into dev_db.consumption_sch.weather_data select  
     'India' as country,
@@ -83,6 +83,7 @@ where
     country = 'IN' and
     DATE_VALID_STD  =  current_date();
 
+SELECT * FROM dev_db.consumption_sch.weather_data ORDER BY 4 DESC;
 
 -- aggregated data
 create or replace dynamic table agg_delhi_fact_day_level
@@ -115,5 +116,22 @@ as
 
 select * from AGG_CITY_FACT_DAY_LEVEL;
 select * from agg_delhi_fact_day_level;
+
+select country  from  
+    global_weather__climate_data_for_bi.standard_tile.history_day where country = 'IN';
+
+
+create or replace task refresh_weather_data_task
+    warehouse = load_wh
+    schedule = 'USING CRON 13 17 * * * Asia/Kolkata'
+as
+insert into dev_db.consumption_sch.weather_data select  
+    'India' as country,
+    DATE_VALID_STD as measurement_dt,
+    AVG_TEMPERATURE_AIR_2M_F as temperature_in_f
+from 
+    global_weather__climate_data_for_bi.standard_tile.history_day
+where 
+    country = 'IN';
 
     

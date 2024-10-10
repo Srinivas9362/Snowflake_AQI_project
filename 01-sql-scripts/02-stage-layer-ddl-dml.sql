@@ -25,7 +25,7 @@ comment = 'all the air quality raw data will store in this internal stage locati
 
   -- level-1
 select 
-    * 
+   count(*)  
 from 
     @dev_db.stage_sch.raw_stg
     (file_format => JSON_FILE_FORMAT) t;
@@ -106,6 +106,7 @@ copy into raw_aqi (index_record_ts,json_data,record_count,json_version,_stg_file
 file_format = (format_name = 'dev_db.stage_sch.JSON_FILE_FORMAT') 
 ON_ERROR = ABORT_STATEMENT; 
 
+show tasks;
 
 use role accountadmin;
 grant execute task, execute managed task on account to role sysadmin;
@@ -116,7 +117,8 @@ alter task dev_db.stage_sch.copy_air_quality_data resume;
 -- check the data
 select *
     from raw_aqi
-    limit 10;
+    limit 10
+    ;
 
 -- select with ranking
 select 
@@ -125,3 +127,21 @@ select
 from raw_aqi 
 order by index_record_ts desc
 limit 10;
+
+select 
+   *,
+    row_number() over (partition by index_record_ts order by _stg_file_load_ts desc) as latest_file_rank
+from raw_aqi 
+order by index_record_ts desc
+limit 10;
+
+select count(*)
+    from raw_aqi;
+
+
+-- SELECT COUNT(*) FROM @DEV_DB.STAGE_SCH.RAW_STG;
+SELECT count($1) as count FROM @DEV_DB.STAGE_SCH.RAW_STG limit 10;
+
+
+ 
+

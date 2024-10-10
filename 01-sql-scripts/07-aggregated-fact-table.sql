@@ -17,9 +17,13 @@ select
 from 
     air_quality_fact f
     join date_dim d on f.date_fk = d.date_pk
-    join location_dim l on f.location_fk = l.location_pk
+    join location_dim l on f.location_fk = l.location_id
 group by 
     1,2,3;
+
+SELECT * FROM location_dim;
+select * from date_dim;
+
 
 -- step-02
 with step01_city_level_data as (
@@ -37,7 +41,7 @@ select
 from 
     air_quality_fact f
     join date_dim d on f.date_fk = d.date_pk
-    join location_dim l on f.location_fk = l.location_pk
+    join location_dim l on f.location_fk = l.location_id
 group by 
     1,2,3
 )
@@ -73,7 +77,7 @@ select
 from 
     air_quality_fact f
     join date_dim d on f.date_fk = d.date_pk
-    join location_dim l on f.location_fk = l.location_pk
+    join location_dim l on f.location_fk = l.location_id
 group by 
     1,2,3,4
 )
@@ -142,3 +146,59 @@ select
         as aqi
 from 
     step01_city_day_level_data;
+
+
+select count(*) from agg_city_fact_day_level limit 10; --4018
+
+-----grooup the data monthly baiss
+
+select Count(*) from agg_city_fact_hour_level; --65697
+
+select count(*) from agg_city_fact_day_level; --4018
+
+
+with monthly_avg_data_cte as(
+select * from agg_city_fact_hour_level limit 10
+)
+select * from monthly_avg_data_cte limit 10;
+
+select month(MEASUREMENT_TIME),count(*) from agg_city_fact_hour_level group by 1;
+
+
+create or replace dynamic table agg_city_fact_monthly_level
+target_lag = 'DOWNSTREAM'
+WAREHOUSE = transform_wh
+as
+with step01_city_month_level_data as (
+select 
+    -- date(measurement_time) as measurement_date,
+    month(measurement_time) as measurement_date,
+    year(measurement_time) as aqi_year,
+    country as country,
+    state as state,
+    city as city,
+    round(avg(pm10_avg)) as pm10_avg,
+    round(avg(pm25_avg)) as pm25_avg,
+    round(avg(so2_avg)) as so2_avg,
+    round(avg(no2_avg)) as no2_avg,
+    round(avg(nh3_avg)) as nh3_avg,
+    round(avg(co_avg)) as co_avg,
+    round(avg(o3_avg)) as o3_avg
+from 
+    agg_city_fact_hour_level
+group by 
+    1,2,3,4,5
+)
+select 
+    *,
+    prominent_index(PM25_AVG,PM10_AVG,SO2_AVG,NO2_AVG,NH3_AVG,CO_AVG,O3_AVG)as prominent_pollutant,
+        case
+        when three_sub_index_criteria(pm25_avg,pm10_avg,so2_avg,no2_avg,nh3_avg,co_avg,o3_avg) > 2 then greatest (pm25_avg,pm10_avg,so2_avg,no2_avg,nh3_avg,co_avg,o3_avg)
+        else 0
+        end
+        as aqi
+from 
+    step01_city_month_level_data;
+
+
+SELECT * FROM agg_city_fact_monthly_level;

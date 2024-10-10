@@ -24,20 +24,13 @@ file_name = f'air_quality_data_{timestamp}.json'
 today_string = current_time_ist.strftime('%Y_%m_%d')
 
 
-# SNOWFLAKE_USER=Srinviasravi
-# SNOWFLAKE_PASSWORD=Ravindra@9362
-# SNOWFLAKE_ACCOUNT=mntiowa-vjb84199
-# SNOWFLAKE_WAREHOUSE=load_wh
-# SNOWFLAKE_DATABASE=dev_db
-# SNOWFLAKE_SCHEMA=stage_sch
-# SNOWFLAKE_ROLE=SYSADMIN
+
 # Following credential has to come using secret whie running in automated way
 def snowpark_basic_auth() -> Session:
     connection_parameters = {
-       "ACCOUNT":"mntiowa-vjb84199",
-    #    "region":"us-east-1",
-        "USER":"Srinviasravi",
-        "PASSWORD":"Ravindra@9362",
+       "ACCOUNT":"ABC-XYZ",
+        "USER":"XXXXXXXXX",
+        "PASSWORD":"XXXX@87870",
         "ROLE":"SYSADMIN",
         "DATABASE":"dev_db",
         "SCHEMA":"stage_sch",
@@ -115,7 +108,7 @@ def get_air_quality_data(api_key, limit):
     return None
 
 # Replace 'YOUR_API_KEY' with your actual API key
-api_key = '579b464db66ec23bdd00000150d05401a92a401d59965ba0221d4a22'
+api_key = '579b464db66ec23bdd00000150d1d59965ba0221d4a22'
 
 
 limit_value = 4000

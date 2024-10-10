@@ -119,7 +119,7 @@ from step01_unique_data
 order by 
     country, STATE, city, station;
 
-
+SELECT * FROM location_dim;
 -- fact table
 -- step-01
 select 
@@ -156,7 +156,7 @@ select
 -- level-02
 select 
         hash(index_record_ts) as date_fk,
-        hash(latitude,longitude) as location_fk
+        hash(latitude,longitude) as location_fk,
         pm10_avg,
         pm25_avg,
         so2_avg,
@@ -176,7 +176,7 @@ select
         station =  'Gangineni Cheruvu, Chittoor - APPCB' and 
         INDEX_RECORD_TS = '2024-03-01 18:00:00.000';
         
-select * from date_dim where date_id = 1635727249877756006;
+select * from date_dim where date_PK = 1635727249877756006;
 select * from location_dim where location_id = 3830234801511030131;
 
 create or replace dynamic table air_quality_fact
@@ -196,8 +196,10 @@ select
         o3_avg,
         prominent_index(pm25_avg,pm10_avg,so2_avg,no2_avg,nh3_avg,co_avg,o3_avg)as prominent_pollutant,
         case
-        when three_sub_index_criteria(pm25_avg,pm10_avg,so2_avg,no2_avg,nh3_avg,co_avg,o3_avg) > 2 then greatest (get_int(pm25_avg),get_int(pm10_avg),get_int(so2_avg),get_int(no2_avg),get_int(nh3_avg),get_int(co_avg),get_int(o3_avg))
+        when three_sub_index_criteria(pm25_avg,pm10_avg,so2_avg,no2_avg,nh3_avg,co_avg,o3_avg) > 2 then greatest ((pm25_avg),(pm10_avg),(so2_avg),(no2_avg),(nh3_avg),(co_avg),(o3_avg))
         else 0
         end
     as aqi
-    from dev_db.clean_sch.clean_flatten_aqi_dt
+    from dev_db.clean_sch.clean_flatten_aqi_dt;
+
+SELECT * FROM air_quality_fact LIMIT 10;

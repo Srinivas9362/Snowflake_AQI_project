@@ -1,3 +1,6 @@
+use role sysadmin;
+use schema dev_db.consumption_sch;
+use warehouse adhoc_wh;
 
 
 -- right most table
@@ -20,14 +23,20 @@ SET TARGET_LAG = 'DOWNSTREAM';
 ALTER DYNAMIC TABLE dev_db.clean_sch.clean_aqi_dt
 SET TARGET_LAG = 'DOWNSTREAM';
 
+alter task dev_db.stage_sch.copy_air_quality_data suspend;
+
 ALTER TASK  dev_db.stage_sch.copy_air_quality_data 
 SET SCHEDULE = '5 minutes';
 
 ALTER DYNAMIC TABLE dev_db.consumption_sch.agg_city_fact_hour_level 
 SET TARGET_LAG = 'DOWNSTREAM';
 
+ALTER DYNAMIC TABLE  dev_db.consumption_sch.agg_city_fact_day_level
+SET TARGET_LAG = '5 minutes';
+
 alter task dev_db.stage_sch.copy_air_quality_data resume;
 
+show tasks;
 
 ALTER DYNAMIC TABLE dev_db.consumption_sch.agg_city_fact_day_level resume;
 ALTER DYNAMIC TABLE dev_db.consumption_sch.agg_city_fact_day_level resume;

@@ -2,7 +2,7 @@ use role sysadmin;
 use schema dev_db.consumption_sch;
 use warehouse adhoc_wh;
 
-drop dynamic table aqi_final_wide_dt;
+-- drop dynamic table aqi_final_wide_dt;
 
 create or replace function prominent_index(pm25 number, pm10 number, so2 number, no2 number, nh3 number, co number, o3 number)
 returns varchar
@@ -31,7 +31,7 @@ def prominent_index(pm25, pm10, so2, no2, nh3, co, o3):
 -- testing
 -- 	56,70 , 12	4	17	47	3
 -- 	89,70 , 12	4	17	47	3
-select prominent_index(56,70,12,4,17,47,3) ;
+select prominent_index(56,70,12,4,17,47,3);
 
 create or replace function three_sub_index_criteria(pm25 number, pm10 number, so2 number, no2 number, nh3 number, co number, o3 number)
 returns number(38,0)
@@ -53,6 +53,7 @@ def three_sub_index_criteria(pm25, pm10, so2, no2, nh3, co, o3  ):
     return pm_count + non_pm_count
 ';
 
+select three_sub_index_criteria(1,3,12,4,17,4,10) ;
 
 create or replace function get_int(input_value varchar)
 returns number(38,0)
@@ -67,13 +68,17 @@ as '
 ';
 
 
-
 show dynamic tables;
+
+select get_int('NA');
+
+SELECT * FROM aqi_final_wide_dt;
+
 create or replace dynamic table aqi_final_wide_dt
     target_lag='30 min'
     warehouse=transform_wh
 as
-select 
+select
         index_record_ts,
         year(index_record_ts) as aqi_year,
         month(index_record_ts) as aqi_month,
@@ -95,11 +100,11 @@ select
         o3_avg,
         prominent_index(pm25_avg,pm10_avg,so2_avg,no2_avg,nh3_avg,co_avg,o3_avg)as prominent_pollutant,
         case
-        when three_sub_index_criteria(pm25_avg,pm10_avg,so2_avg,no2_avg,nh3_avg,co_avg,o3_avg) > 2 then greatest (get_int(pm25_avg),get_int(pm10_avg),get_int(so2_avg),get_int(no2_avg),get_int(nh3_avg),get_int(co_avg),get_int(o3_avg))
+        when three_sub_index_criteria(pm25_avg,pm10_avg,so2_avg,no2_avg,nh3_avg,co_avg,o3_avg) > 2 then greatest ((pm25_avg),(pm10_avg),(so2_avg),(no2_avg),(nh3_avg),(co_avg),(o3_avg))
         else 0
         end
         as aqi
-    from dev_db.clean_sch.clean_flatten_aqi_dt;
+from dev_db.clean_sch.clean_flatten_aqi_dt;
 
 --
 -- for missing data ..we can use lead or lag approach to fill the missing value
@@ -138,7 +143,7 @@ step02_with_lag_cte as (
         LEAD(PM25_AVG, 1) OVER (partition by COUNTRY,STATE,CITY,STATION,LATITUDE,LONGITUDE ORDER BY aqi_hour) AS lead_pm25
 from step01_time_hierarchy_cte
 )
-select * from step02_with_lag_cte;
+select * from step02_with_lag_cte limit 10;
     
 
     
@@ -161,3 +166,49 @@ SELECT
     END AS final_temperature
 FROM
     PreviousData;
+
+
+CREATE OR REPLACE DYNAMIC TABLE aqi_final_wide_dt
+    TARGET_LAG = '30 min'
+    WAREHOUSE = transform_wh
+AS
+SELECT
+    index_record_ts,
+    YEAR(index_record_ts) AS aqi_year,
+    MONTH(index_record_ts) AS aqi_month,
+    QUARTER(index_record_ts) AS aqi_quarter,
+    DAY(index_record_ts) AS aqi_day,
+    HOUR(index_record_ts) AS aqi_hour,
+    country,
+    state,
+    city,
+    station,
+    latitude,
+    longitude,
+    pm10_avg,
+    pm25_avg,
+    so2_avg,
+    no2_avg,
+    nh3_avg,
+    co_avg,
+    o3_avg,
+    prominent_index(pm25_avg, pm10_avg, so2_avg, no2_avg, nh3_avg, co_avg, o3_avg) AS prominent_pollutant,
+    CASE
+        WHEN three_sub_index_criteria(pm25_avg, pm10_avg, so2_avg, no2_avg, nh3_avg, co_avg, o3_avg) > 2 THEN 
+            GREATEST (
+                get_int(pm25_avg),
+                get_int(pm10_avg),
+                get_int(so2_avg),
+                get_int(no2_avg),
+                get_int(nh3_avg),
+                get_int(co_avg),
+                get_int(o3_avg)
+            )
+        ELSE 0
+    END AS aqi
+FROM dev_db.clean_sch.clean_flatten_aqi_dt;
+
+SELECT * FROM  dev_db.clean_sch.clean_flatten_aqi_dt LIMIT 10;
+
+select * from aqi_final_wide_dt limit 10;
+

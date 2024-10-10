@@ -14,7 +14,7 @@ select
 from 
     dev_db.stage_sch.raw_aqi 
 where 
-    index_record_ts is not null;
+    index_record_ts is not null
 order by id;
 
 -- Step-4
@@ -65,7 +65,8 @@ select
 from 
     dev_db.stage_sch.raw_aqi 
 where 
-    index_record_ts is not null; -- this will give all 24 records
+    index_record_ts is not null
+order by _stg_file_load_ts desc; -- this will give all 24 records
 
 
 
@@ -112,7 +113,7 @@ unique_air_quality_data as (
     unique_air_quality_data ,
     lateral flatten (input => json_data:records) hourly_rec;
 
-
+SELECT COUNT(*) FROM air_quality_with_rank;
 -- creating dynamic table
 create or replace dynamic table clean_aqi_dt
     target_lag='downstream'
@@ -161,4 +162,6 @@ unique_air_quality_data as (
     lateral flatten (input => json_data:records) hourly_rec;
 
 
-  select * from clean_aqi_dt limit 10;
+  select count(*) from clean_aqi_dt;
+
+   select * from clean_aqi_dt limit 10;
